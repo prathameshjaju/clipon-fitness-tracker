@@ -256,7 +256,7 @@ function onSleepData(event) {
 
 // ===== AI COACH (Groq) =====
 const GROQ_API_KEY = localStorage.getItem('groq_api_key') || '';
-const GROQ_MODEL   = 'llama3-8b-8192';
+const GROQ_MODEL   = 'llama-3.1-8b-instant';
 let chatHistory    = [];
 let chatOpen       = false;
 
