@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pulse-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3001", "web"],
+      "port": 3001
+    }
+  ]
+}
