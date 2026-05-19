@@ -344,6 +344,44 @@ main { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
   color: var(--accent);
 }
 
+/* ===== AI COACH ===== */
+.ai-response {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  min-height: 60px;
+  margin-bottom: 14px;
+  padding: 12px;
+  background: rgba(108, 99, 255, 0.06);
+  border: 1px solid rgba(108, 99, 255, 0.15);
+  border-radius: 10px;
+}
+
+.ai-response.loading {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.btn-ask-ai {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+.btn-ask-ai:hover { opacity: 0.85; }
+.btn-ask-ai:disabled { opacity: 0.5; cursor: not-allowed; }
+
 @media (max-width: 360px) {
   .metric-value { font-size: 40px; }
 }

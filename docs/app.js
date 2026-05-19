@@ -254,6 +254,70 @@ function onSleepData(event) {
   document.getElementById('sleepDuration').textContent = `${hrs}h ${mins}m`;
 }
 
+// ===== AI COACH =====
+const OLLAMA_API_KEY = 'f83fddbc10bd49c19821e7a9e38e5c61.C60W-qq_osi8cOZEZRJ23_cx';  // Replace with your key
+const OLLAMA_MODEL   = 'gemma3:4b';
+
+async function askAI() {
+  const btn = document.getElementById('askAiBtn');
+  const responseEl = document.getElementById('aiResponse');
+
+  const steps   = document.getElementById('stepsVal').textContent;
+  const bpm     = document.getElementById('bpmVal').textContent;
+  const spo2    = document.getElementById('spo2Val').textContent;
+  const sleep   = document.getElementById('sleepDuration').textContent;
+  const cal     = document.getElementById('caloriesVal').textContent;
+  const sleeping = document.getElementById('sleepBadge').textContent.includes('Sleeping');
+  const p       = getProfile();
+
+  const prompt = `You are a concise fitness coach. Analyse this data and give 2-3 short, specific, actionable tips.
+
+User: ${p.name || 'User'}, ${p.age || '?'}y, ${p.weight || '?'}kg
+Steps today: ${steps} (goal: ${p.stepGoal || 8000})
+Calories burned: ${cal} kcal
+Heart rate: ${bpm} BPM
+SpO2: ${spo2}%
+Sleep tracked: ${sleep} (currently ${sleeping ? 'sleeping' : 'awake'})
+
+Give practical advice based on this exact data. Be direct and specific. No generic advice.`;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Thinking...';
+  responseEl.className = 'ai-response loading';
+  responseEl.textContent = 'Analysing your data...';
+
+  try {
+    const res = await fetch('https://ollama.com/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OLLAMA_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: OLLAMA_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        stream: false
+      })
+    });
+
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+    const data = await res.json();
+    const text = data.message?.content || data.response || 'No response received.';
+
+    responseEl.className = 'ai-response';
+    responseEl.textContent = text;
+
+  } catch (err) {
+    responseEl.className = 'ai-response';
+    responseEl.textContent = 'Could not reach AI coach. Check your API key or connection.';
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>✨</span> Ask AI Coach';
+}
+
 // ===== Init =====
 window.addEventListener('load', () => {
   loadProfile();
