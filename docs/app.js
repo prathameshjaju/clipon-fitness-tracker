@@ -255,7 +255,7 @@ function onSleepData(event) {
 }
 
 // ===== AI COACH (Groq) =====
-const GROQ_API_KEY = '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';
+const GROQ_API_KEY = localStorage.getItem('groq_api_key') || '';
 const GROQ_MODEL   = 'llama3-8b-8192';
 let chatHistory    = [];
 let chatOpen       = false;
@@ -289,7 +289,12 @@ function toggleChat() {
   fab.textContent = chatOpen ? '✕' : '🤖';
 
   if (chatOpen && chatHistory.length === 0) {
-    addChatMessage('ai', "Hi! I'm your AI fitness coach. I can see your live data. Ask me anything about your health, steps, sleep, or heart rate!");
+    const key = localStorage.getItem('groq_api_key');
+    if (!key) {
+      addChatMessage('ai', "To activate me, enter your Groq API key below (free at groq.com). It stays on your device only.");
+    } else {
+      addChatMessage('ai', "Hi! I'm your AI fitness coach. I can see your live data. Ask me anything about your health, steps, sleep, or heart rate!");
+    }
   }
 }
 
@@ -322,6 +327,21 @@ async function sendChatMessage() {
   const text  = input.value.trim();
   if (!text) return;
 
+  // First message: check if it's an API key
+  if (!localStorage.getItem('groq_api_key') && text.startsWith('gsk_')) {
+    localStorage.setItem('groq_api_key', text);
+    input.value = '';
+    addChatMessage('user', '••••••••••••');
+    addChatMessage('ai', "Key saved! I'm ready. Ask me anything about your fitness data.");
+    return;
+  }
+
+  const key = localStorage.getItem('groq_api_key');
+  if (!key) {
+    addChatMessage('ai', "Please enter your Groq API key first (starts with gsk_).");
+    return;
+  }
+
   input.value = '';
   addChatMessage('user', text);
 
@@ -333,7 +353,7 @@ async function sendChatMessage() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
+        'Authorization': `Bearer ${localStorage.getItem('groq_api_key')}`
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
