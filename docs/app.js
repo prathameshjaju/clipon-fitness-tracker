@@ -287,7 +287,7 @@ Give practical advice based on this exact data. Be direct and specific. No gener
   responseEl.textContent = 'Analysing your data...';
 
   try {
-    const res = await fetch('https://ollama.com/api/chat', {
+    const res = await fetch('https://ollama.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -300,17 +300,23 @@ Give practical advice based on this exact data. Be direct and specific. No gener
       })
     });
 
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`${res.status}: ${errText}`);
+    }
 
     const data = await res.json();
-    const text = data.message?.content || data.response || 'No response received.';
+    const text = data.choices?.[0]?.message?.content ||
+                 data.message?.content ||
+                 data.response ||
+                 'No response received.';
 
     responseEl.className = 'ai-response';
     responseEl.textContent = text;
 
   } catch (err) {
     responseEl.className = 'ai-response';
-    responseEl.textContent = 'Could not reach AI coach. Check your API key or connection.';
+    responseEl.textContent = `Error: ${err.message}`;
     console.error(err);
   }
 
