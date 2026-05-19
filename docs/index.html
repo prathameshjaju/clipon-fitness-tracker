@@ -117,20 +117,37 @@
         </div>
       </div>
 
-      <!-- AI Coach -->
-      <div class="card" id="aiCoachCard">
-        <div class="card-header">
-          <div class="card-title">AI Coach</div>
-          <div>🤖</div>
-        </div>
-        <div id="aiResponse" class="ai-response">Tap below to get a personalised coaching tip based on your current data.</div>
-        <button class="btn-ask-ai" id="askAiBtn" onclick="askAI()">
-          <span>✨</span> Ask AI Coach
-        </button>
-      </div>
 
     </div>
   </main>
+
+  <!-- Chat FAB button -->
+  <button class="chat-fab" id="chatFab" onclick="toggleChat()">🤖</button>
+
+  <!-- Chat Panel -->
+  <div class="chat-panel" id="chatPanel" style="display:none">
+    <div class="chat-header">
+      <div class="chat-title">
+        <span>🤖</span>
+        <div>
+          <div style="font-weight:700;font-size:14px">AI Coach</div>
+          <div style="font-size:11px;color:var(--green)">● Online</div>
+        </div>
+      </div>
+      <button class="chat-close" onclick="toggleChat()">✕</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-row">
+      <input
+        type="text"
+        id="chatInput"
+        class="chat-input"
+        placeholder="Ask your coach..."
+        onkeydown="handleChatKey(event)"
+      >
+      <button class="chat-send" onclick="sendChatMessage()">➤</button>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

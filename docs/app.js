@@ -254,74 +254,121 @@ function onSleepData(event) {
   document.getElementById('sleepDuration').textContent = `${hrs}h ${mins}m`;
 }
 
-// ===== AI COACH =====
-const OLLAMA_API_KEY = 'f83fddbc10bd49c19821e7a9e38e5c61.C60W-qq_osi8cOZEZRJ23_cx';  // Replace with your key
-const OLLAMA_MODEL   = 'gemma3:4b';
+// ===== AI COACH (Groq) =====
+const GROQ_API_KEY = 'YOUR_GROQ_API_KEY';
+const GROQ_MODEL   = 'llama3-8b-8192';
+let chatHistory    = [];
+let chatOpen       = false;
 
-async function askAI() {
-  const btn = document.getElementById('askAiBtn');
-  const responseEl = document.getElementById('aiResponse');
-
+function getLiveContext() {
+  const p       = getProfile();
   const steps   = document.getElementById('stepsVal').textContent;
   const bpm     = document.getElementById('bpmVal').textContent;
   const spo2    = document.getElementById('spo2Val').textContent;
   const sleep   = document.getElementById('sleepDuration').textContent;
   const cal     = document.getElementById('caloriesVal').textContent;
   const sleeping = document.getElementById('sleepBadge').textContent.includes('Sleeping');
-  const p       = getProfile();
 
-  const prompt = `You are a concise fitness coach. Analyse this data and give 2-3 short, specific, actionable tips.
+  return `You are a friendly, concise personal fitness coach for ${p.name || 'the user'}.
+Current live data from their wearable tracker:
+- Steps: ${steps} (daily goal: ${p.stepGoal || 8000})
+- Calories burned: ${cal} kcal
+- Heart rate: ${bpm} BPM
+- SpO2: ${spo2}%
+- Sleep: ${sleep} tracked (currently ${sleeping ? 'sleeping' : 'awake'})
+- Profile: ${p.age || '?'}y, ${p.weight || '?'}kg, ${p.height || '?'}cm
 
-User: ${p.name || 'User'}, ${p.age || '?'}y, ${p.weight || '?'}kg
-Steps today: ${steps} (goal: ${p.stepGoal || 8000})
-Calories burned: ${cal} kcal
-Heart rate: ${bpm} BPM
-SpO2: ${spo2}%
-Sleep tracked: ${sleep} (currently ${sleeping ? 'sleeping' : 'awake'})
+Answer questions based on this real data. Be specific, practical, and brief. No generic advice.`;
+}
 
-Give practical advice based on this exact data. Be direct and specific. No generic advice.`;
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const panel = document.getElementById('chatPanel');
+  const fab   = document.getElementById('chatFab');
+  panel.style.display = chatOpen ? 'flex' : 'none';
+  fab.textContent = chatOpen ? '✕' : '🤖';
 
-  btn.disabled = true;
-  btn.innerHTML = '<span>⏳</span> Thinking...';
-  responseEl.className = 'ai-response loading';
-  responseEl.textContent = 'Analysing your data...';
+  if (chatOpen && chatHistory.length === 0) {
+    addChatMessage('ai', "Hi! I'm your AI fitness coach. I can see your live data. Ask me anything about your health, steps, sleep, or heart rate!");
+  }
+}
+
+function addChatMessage(role, text) {
+  const messages = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  div.textContent = text;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function addTypingIndicator() {
+  const messages = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ai typing';
+  div.id = 'typingIndicator';
+  div.textContent = '...';
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  addChatMessage('user', text);
+
+  chatHistory.push({ role: 'user', content: text });
+  addTypingIndicator();
 
   try {
-    const res = await fetch('https://corsproxy.io/?url=https://ollama.com/v1/chat/completions', {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OLLAMA_API_KEY}`
+        'Authorization': `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: OLLAMA_MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        stream: false
+        model: GROQ_MODEL,
+        messages: [
+          { role: 'system', content: getLiveContext() },
+          ...chatHistory
+        ],
+        max_tokens: 300,
+        temperature: 0.7
       })
     });
 
     if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`${res.status}: ${errText}`);
+      const err = await res.text();
+      throw new Error(err);
     }
 
-    const data = await res.json();
-    const text = data.choices?.[0]?.message?.content ||
-                 data.message?.content ||
-                 data.response ||
-                 'No response received.';
+    const data   = await res.json();
+    const reply  = data.choices[0].message.content;
 
-    responseEl.className = 'ai-response';
-    responseEl.textContent = text;
+    chatHistory.push({ role: 'assistant', content: reply });
+    removeTypingIndicator();
+    addChatMessage('ai', reply);
 
   } catch (err) {
-    responseEl.className = 'ai-response';
-    responseEl.textContent = `Error: ${err.message}`;
-    console.error(err);
+    removeTypingIndicator();
+    addChatMessage('ai', `Error: ${err.message}`);
   }
+}
 
-  btn.disabled = false;
-  btn.innerHTML = '<span>✨</span> Ask AI Coach';
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage();
+  }
 }
 
 // ===== Init =====
