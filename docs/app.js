@@ -287,7 +287,7 @@ Give practical advice based on this exact data. Be direct and specific. No gener
   responseEl.textContent = 'Analysing your data...';
 
   try {
-    const res = await fetch('https://ollama.com/v1/chat/completions', {
+    const res = await fetch('https://corsproxy.io/?url=https://ollama.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
